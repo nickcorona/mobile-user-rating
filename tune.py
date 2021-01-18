@@ -6,18 +6,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from pandas_profiling import ProfileReport
 from sklearn.model_selection import train_test_split
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
 from helpers import encode_dates, loguniform, similarity_encode
 
 df = pd.read_csv(
-    r"data\iris.csv",
-    parse_dates=[],
+    r"data\appstore_games.csv",
+    parse_dates=["Original Release Date", "Current Version Release Date"],
     index_col=[],
     delimiter=",",
     low_memory=False,
 )
+
+PROFILE = True
+if PROFILE:
+    profile = ProfileReport(df)
+    profile.to_file("pandas_profiling_report.html")
 
 print(
     pd.concat([df.dtypes, df.nunique() / len(df)], axis=1)
@@ -398,16 +404,16 @@ plt.savefig(figure_path / "feature_importance.png")
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
+    mean_squared_error,
     plot_roc_curve,
     r2_score,
     roc_curve,
-    mean_squared_error,
 )
 
 accuracy_score(yv, model.predict(Xv).argmax(axis=1))  # 0.8947368421052632
 
-from sklearn.metrics import mean_squared_error, r2_score
 import numpy as np
+from sklearn.metrics import mean_squared_error, r2_score
 
 # test score
 TEST = False
