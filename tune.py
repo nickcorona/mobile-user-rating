@@ -4,11 +4,13 @@ from pathlib import Path
 import lightgbm as lgb
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.core.numeric import False_
 import pandas as pd
 import seaborn as sns
 from pandas_profiling import ProfileReport
 from sklearn.model_selection import train_test_split
 from statsmodels.nonparametric.smoothers_lowess import lowess
+import phik
 
 from helpers import encode_dates, loguniform, similarity_encode
 
@@ -20,7 +22,7 @@ df = pd.read_csv(
     low_memory=False,
 )
 
-PROFILE = True
+PROFILE = False
 if PROFILE:
     profile = ProfileReport(df)
     profile.to_file("pandas_profiling_report.html")
@@ -31,10 +33,16 @@ print(
     .sort_values(["dtype", "proportion unique"])
 )
 
-TARGET = "Species"
-df = df.dropna(subset=[TARGET])
-TARGET_LEAKAGE = ["Id"]
-y = df[TARGET].replace(["Iris-setosa", "Iris-versicolor", "Iris-virginica"], [0, 1, 2])
+TARGET = "Average User Rating"
+print(f"Missing targets: {df[TARGET].isnull().sum()}")
+print(f"% missing: {df[TARGET].isnull().sum() / len(df):.0%}")
+
+DROP_MISSING = False
+if DROP_MISSING:
+    df = df.dropna(subset=[TARGET])
+
+TARGET_LEAKAGE = ["ID"]
+y = df[TARGET].replace(np.nan, 0)
 X = df.drop(
     [TARGET, *TARGET_LEAKAGE],
     axis=1,
@@ -52,15 +60,24 @@ unique.columns = [
 ]
 print(unique)
 
-ENCODE = False
+ENCODE = True
 if ENCODE:
     X = similarity_encode(
         X,
-        encode_columns=[],
-        n_prototypes=5,
-        train=True,
-        drop_original=False,
+        encode_columns=[
+            "Subtitle",
+        ],
+        n_prototypes=4,
+        preran=False,
+        drop_original=True,
     )
+
+LENGTH_ENCODE = True
+if LENGTH_ENCODE:
+    len_encode = ["URL"]
+    for col in len_encode:
+        X[f"{col}_len"] = X[col].apply(len)
+        X = X.drop(col, axis=1)
 
 CATEGORIZE = False
 if CATEGORIZE:

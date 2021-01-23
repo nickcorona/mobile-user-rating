@@ -26,11 +26,11 @@ def encode_dates(df, column, country=None):
     return df
 
 
-def similarity_encode(X, encode_columns, n_prototypes, train, drop_original):
+def similarity_encode(X, encode_columns, n_prototypes, preran, drop_original):
     X = X.copy()
-    if train:
+    if not preran:
         enc = SimilarityEncoder(
-            similarity="ngram", categories="k-means", n_prototypes=n_prototypes
+            similarity="ngram", categories="auto", n_prototypes=n_prototypes
         )
         enc.fit(X[encode_columns].values)
         Path("encoders").mkdir(exist_ok=True)
